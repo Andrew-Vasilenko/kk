@@ -1,0 +1,47 @@
+/*
+*	Primary file
+*/
+
+// dependencies
+const express = require('express')	
+const app = express()
+const http = require('http')
+const handlers = require('./handlers.js')
+
+// routes
+app.get("/", (req, res) => {
+	handlers.index(req,res)
+})
+
+
+app.get("/accounts", (req, res) => {
+	handlers.getAccount(req,res)
+})
+app.post("/accounts", (req, res) => {
+	handlers.createAccount(req,res)
+})
+app.put("/accounts", (req, res) => {
+	handlers.editAccount(req,res)
+})
+app.delete("/accounts", (req, res) => {
+	handlers.deleteAccount(req,res)
+})
+
+
+app.get("/clients", (req, res) => {
+	handlers.getClient(req,res)
+})
+app.post("/clients", (req, res) => {
+	handlers.createClient(req,res)
+})
+app.put("/clients", (req, res) => {
+	handlers.editClient(req,res)
+})
+app.delete("/clients", (req, res) => {
+	handlers.deleteClient(req,res)
+})
+
+// server
+var server = app.listen(3000, () => console.log("Server is listening on port 3000"))
+
+// https://viewer.diagrams.net/?highlight=0000ff&edit=_blank&layers=1&nav=1#R7V1Zd5tGFP41Oid5UA4zCASPoCVNT5e0jtumb1hCSyoLF6HY6q8vYrY7CxhHWCDHeVBgmOXO%2Fe69891hcc8e3T68T6O71c%2FJPN70sDV%2F6NnjHsa2ZQ3y%2F44lB1KC%2FIFNSpbpek7LRMHV%2Br%2BYFlq0dL%2BexzupYpYkm2x9JxfOku02nmVSWZSmyb1cbZFs5FHvomWsFVzNoo1e%2Bud6nq1IqYeHovyHeL1csZGR65MrtxGrTGeyW0Xz5B4U2ZOePUqTJCNHtw%2BjeHPUHtMLaTctucoFS%2BNtVqfBtf%2Fb4JflNn348O%2Fv9%2B%2BXN%2B40mvcd0svXaLOnE6bCZgemgTTZb%2BfxsROrZ4f3q3UWX91Fs%2BPV%2Bxz0vGyV3W7yM5Qf0u7iNIsfSuVEfPa53cTJbZylh7wKbdBHAwY%2BNRrfpuf3AgHMylZA%2B9ijhRFFfcl7F4rJD6huzHoaoP1kePgLLfbBePQ%2BWV3v%2Fkj6yNb0Es9zQ6GnSZqtkmWyjTYTURrKmhN1fkqSO6qvL3GWHajVR%2FsskbWZayw9%2FHVs%2F85hp59pd8XJ%2BEE6O9CzEpXn4if7dBZXzZP5WJQu46yqIjWUoxYqUU3jTZStv8ru1Dg%2B3MkuAp%2F4YZ2RZkOHnn5mXebHotXx5Jyg%2Bt0CVQ9GHQb1DPiwHs%2BPj7O8XQzH6Kt9Hf84%2FGP%2B4cv4w6KPXuGRK3pNw1M0DdI0OoAKd8l6m%2B1Azx%2BPBWIBtW1HWj77yLIUavDUFvkBkUIYC5%2FOCYsqMrCP6X67JrP7dhayWG82o2STpEVbe7FY4NksL99lafJPDK7M3RvXcausQ6MypbwFO5aiROTovMXGBt6CBs%2FGW7Cm4veTTz3sbvKhw5s0P1pmxfyp3u3pNrolNfU6akkaR%2FMLRApZClK%2BASiOCQTKfTacPIMrqOr%2B%2BOtVFXQ1AJvliGXxBULGNV8JmWOCzH7nPBdovgbax%2BsTEYrn6%2BwC8RngzrkU1leX8eSnyadJU9FvHm%2Fii3Qmx%2BseWN9Jfs32jR6n%2Bo1zydPwGVwSPiK%2FxufIr%2BuD2nh%2Bbebz2Ff4vGspjktEpc0U22iA2WPnMs3lLNsxtc2FbXF2JQa4lwTqOfBpbTumUm45nb6Po7tk%2ByISag%2B3nk9jPU8ry6eZ4r%2FLjNo1QHVmRmlIzsryZ%2B4j31MG3T5EbH2rkT8%2FAaGXkkF3AJ8nZdDfFO9eTg7dAbjc2mvTgohT7HogAtW%2F%2B4RCJI6i26OqyS%2BBt2blaJatk22RXuyu649xFAeXVCXjl11VByyrpwxY2NmutO7FWSVSg4iDdKt0fPeZKJPxLiHWWWmuP7%2F4DcfFr9XLVeYN2XH%2BGxa%2FeRZJTgfF7wRccqXmtBoq%2BgmLX1z8jtglD%2FTjFJem7wyukV8OpqzNWBYCyjdiAuUdWdocyGBYnk9%2BFfGBi1J%2FUJzboEfSy4QNyQ%2BmYKQJ6AuzCRFxixkfjwOgMF%2FWgQ26cgpRzGoYgwEm5V1w5QdAOFyinukTAbWYImGfirIwEIyrHyoLQqEbxhRUc4BsHpAnoCWYySMZiKXhAecVgDqOUCOGUwvBuEYhQ9CtXRQqY9kyTHzQ4thsQ1xRiMomyqEGQoCIUlnRqhjX5FlGI6OuiLQ5F04gVOyBCnlXI%2BEfdErcjVwgulPi4aWjKo4TgllOZMt1qGepyENj9OUmoewBECJX8wnFZ4ey%2BnX3YspqeL6K%2B9oAEigtro332CQP1wPs2QLQ8rWC%2B4ovi8c7VBx6TMul9cGWcSz6N7hUaAinit8fYyflUtiSTRHEZmy9qfR1xGX4sku2cujX4l6pg3NoIWDQHKUlqNIKdS3zMJgfs8BoiJ88ZpL5jNQpVEWnidxtHajKJgusXJ5yXxVaDKbDzqfqyLoYgiGRNLBUwZMrlFmubviPIm2dsgK9reuq%2FlSTUrEmCyzUikIruABXBFyBn7ouQUOotSKVUDpMoysxEGmN0cOvBoYQzK%2B0dLiSBVrUgkS4mrBxwfIDF5hmCCrDEUck9PDIKF8TbaYarhUMqqhjXpygrQxBKAhV8gNnhfWlqMJoHFPYGQENslmIblmoFaHMRGsN9qEsToFsNDBmUvDq%2B5ZCcwegx7GsOGgOI23OkPjrixiPRWMwW24NkMiEQIBQlsrVZFO4JpRK79OTe4MkqIzjAZtT4ange6TbkQqkah9GugyNKZAEEOZrsSDBVZSfDgwUjGHxRqvBSSOXSSdygTzVoQbzCJghFw6ZJsCJiO7HUDvK4jQSVvLoJOVQo3mMIioR0ukX%2FylLLpeGXlbMW1w2QTaW4zc0eMUeFBeALF5e1oXRosoE3bg6s20Iw%2FrGg7SRK8rc5QluqBNhhYENNcSgkFwh1dsxPF7BSxVZKxwIrg0ce2WV9oz2AhYPo9KUWAHdgvE3YQYaYSk1ZBhenNOhvP7w9rT9xEZ2B115d9A2vFjl%2BKYXq4YN7A5ebT7uwofV%2FEv0dzKefl7O%2B4d7fpvuvA8VlCoTPhxglrenPRtgrkcfaDv%2FswFVYqubsHC9hhF1KNmwsmcn0SBlM1JZ65DkoWoEY6u2HZQTp91dtJXMg%2B3Oz8gO%2BjHopsubNyQZP3qaOMLW4K20sS%2F2IfT9VEio4foGQyLnLfrWhZJtlE0nB4%2FMiBW3HBL6yFJuZDmWHhP427gwJjTxrqXZVlt5r%2BjbQ4JdMyQgp1MhwTaGhABpnqGkcpa2s%2FlY%2FKjy70VSPLg44%2FfDhLvaVv5vNuuKBxvIThkngqQg1EjBtDI8EIV0JjzYg66Fh5f3FKJxmoOaUaVbQWVgDirwNmUAuLIPmLQvuybPfAkFad0RXKtrjtAKcz6%2FIzg1HWHYKUcwfFjj6AiQHEMLVzbYKzZf4TanuLekJKY8e4aprXF3Ae6KjaBA7aerOWFy5PcYjM9YYYPP2c%2Flc0gPRZ3mpoZH2c3zau1Vgyqx1XRV2TIq41jEM7pnvcO2rdfwkvFRrTWpa0fV6rltq%2FUFfhyoMkg8Gk1ae3exUmzDu%2FVV2edsZhVfwTBlnz5MduGx8pSLvl4bH7Xjm%2BPIfNe7gXwRtUSTh6Zvd5loMlJfUWwO%2F4t6d%2FUE96zLlFG3qDJ65coNOJ76zm8HuHIrOzUn%2BE9dsoy7RZbRi2DLmv22zpZN3%2BS5PLqs6rUDdPk72bjCdely89%2BNO%2B3%2B2wvky2Pw0J3YXYarf1gug%2F7sR%2FUNp%2FKH4o%2FC20AJIRBJuZ%2FUxHCdzRLUu0odyBJwKzt7LUSlurercbfuLOGS%2B9WvWcKTnvawu5YltPNlqRP8p26W3d4XvCrlvuwsQbPf1rMErL91f4FZgqrX9rME9jWjF78ee3XjiduteFL%2BxdrXLOE1S2gkKHltZgnGv5di%2BmI5VagEX2EtQWE%2FfoFFgIGeb5pUclt%2FbKWJD4YYdVxF9IkyfahYUk4WXQ%2BUTEC5JVyb1PGdN6a39Xg78sSaH4j%2BghCUP9bHFEgAj0GIoTOpJRMxJ9qTB0qeMq8haFFjXt0zTAPVMxom5ymNW6b56Uaq0%2BJZRvJGhc%2FeZCKKprB7KuwBa24GrLxbY3ip6EpCd%2FqNnUiuRLqd1GiF1FbQaAP9Uf%2F2DQ1Z%2FjNaWn4q%2FuYX%2Bd6u%2BNNp9uR%2F
