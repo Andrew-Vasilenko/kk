@@ -1,5 +1,0 @@
-clients = {
-
-}
-
-module.exports = clients

@@ -3,9 +3,65 @@
 */
 
 // dependencies
-const accounts = require('./db/Accounts.js')
-const clients = require('./db/Clients.js')
 const fs = require('fs')
+
+// "database"
+Accounts = {}
+
+// classes
+class Account {
+	constructor(clientID, ID, currency, balance) {
+		this.clientID = clientID
+		this.ID = ID
+		this.currency = currency
+		this.balance = balance
+
+		this.reserved = false
+		this.opened = false
+		this.closed = false
+	}
+	// резервирование
+	reserve(){
+		if(this.reserved == false){
+			this.reserved = true
+			console.log("Success! The bank account (ID:"+ ID +") was successfully reserved")
+		}
+		else {
+			console.log('Error! The bank account (ID:'+ ID +') already passed the process of reservation')
+		}
+	}
+	// открытие
+	open(){
+		if(this.opened == false){
+			this.opened = true
+			console.log("Success! The bank account (ID:"+ ID +") was successfully opened")
+		}
+		else {
+			console.log('Error! The bank account (ID:'+ ID +') already opened')
+		}
+	}
+	// пополнение
+	topUp(){
+
+	}
+	// списание
+	withdraw(){
+
+	}
+	// закрытие
+	close(){
+		if(this.closed == false){
+			this.closed = true
+			console.log("Success! The bank account (ID:"+ ID +") was successfully closed")
+		}
+		else {
+			console.log('Error! The bank account (ID:'+ ID +') already closed')
+		}
+	}
+	// age(x) {
+	// 	return x - this.year;
+	// }
+}
 
 // container
 var handlers = {}
@@ -20,27 +76,29 @@ handlers.getAccount = function(req,res){
 	res.send("account' READ functions ('get all' option is also acceptable)")
 }
 handlers.createAccount = function(req,res){
-	res.send("account's CREATE function")
+	// res.send("account's CREATE function")
+	let clientID = req.body.clientID
+	let ID = req.body.ID
+	let type = req.body.type
+	let currency = req.body.currency
+	let balance = req.body.balance
+	
+	if (clientID && ID && currency && balance && type !== undefined){
+		// switch (type)
+		// current => new Account(clientID, ID, currency, balance)
+		let newAccount = new Account(clientID, ID, currency, balance)
+		Accounts[newAccount.ID] = newAccount
+		console.log(Accounts)
+		res.send(newAccount)
+	} else {
+		res.send("Error! Account was not created. Check the required values.")
+	}
 }
 handlers.editAccount = function(req,res){
 	res.send("account's EDIT function")
 }
-handlers.deleteAccount = function(req,res){
+handlers.closeAccount = function(req,res){
 	res.send("account's DELETE function")
-}
-
-
-handlers.getClient = function(req,res){
-	res.send("client's READ functions ('get all' option is also acceptable)")
-}
-handlers.createClient = function(req,res){
-	res.send("client's CREATE function")
-}
-handlers.editClient = function(req,res){
-	res.send("client's EDIT function")
-}
-handlers.deleteClient = function(req,res){
-	res.send("client's DELETE function")
 }
 
 // module export

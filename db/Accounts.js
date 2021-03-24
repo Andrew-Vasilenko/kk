@@ -1,5 +1,0 @@
-accounts = {
-
-}
-
-module.exports = accounts

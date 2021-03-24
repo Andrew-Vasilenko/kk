@@ -7,6 +7,9 @@ const express = require('express')
 const app = express()
 const http = require('http')
 const handlers = require('./handlers.js')
+const bodyParser = require('body-parser')
+// initialize body-parser to parse incoming parameters requests to req.body
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // routes
 app.get("/", (req, res) => {
@@ -24,21 +27,7 @@ app.put("/accounts", (req, res) => {
 	handlers.editAccount(req,res)
 })
 app.delete("/accounts", (req, res) => {
-	handlers.deleteAccount(req,res)
-})
-
-
-app.get("/clients", (req, res) => {
-	handlers.getClient(req,res)
-})
-app.post("/clients", (req, res) => {
-	handlers.createClient(req,res)
-})
-app.put("/clients", (req, res) => {
-	handlers.editClient(req,res)
-})
-app.delete("/clients", (req, res) => {
-	handlers.deleteClient(req,res)
+	handlers.closeAccount(req,res)
 })
 
 // server
