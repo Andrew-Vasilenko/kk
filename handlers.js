@@ -43,20 +43,17 @@ class CurrentAccount {
 		if(this.opened == false){
 			if (this.reserved == true){
 				this.opened = true
-				console.log("Success! The bank account (ID:"+ this.ID +") was successfully opened.")
 				return {
 					status: true,
 					msg: "Success! The bank account (ID:"+ this.ID +") was successfully opened."
 				}
 			} else {
-				console.log("Error! The bank account (ID:"+ this.ID +") must be reserved before.")
 				return {
 					status: false,
 					msg: "Error! The bank account (ID:"+ this.ID +") must be reserved before."
 				}
 			}
 		} else {
-			console.log("Error! The bank account (ID:"+ this.ID +") was already opened.")
 			return {
 				status: false,
 				msg: "Error! The bank account (ID:"+ this.ID +") was already opened."
@@ -68,13 +65,11 @@ class CurrentAccount {
 		if (this.closed == false){
 			if (this.opened == true){
 				this.balance += parseInt(amount,10)
-				console.log("Success! The bank account (ID:"+ this.ID +") was topped up. Current balance: " + this.balance.toString() + " " + this.currency.toString())
 				return {
 					status: true,
 					msg: "Success! The bank account (ID:"+ this.ID +") was topped up. Current balance: " + this.balance.toString() + " " + this.currency.toString()
 				}
 			} else {
-				console.log("Error! The bank account (ID:"+ this.ID +") must be opened before.")
 				return {
 					status: false,
 					msg: "Error! The bank account (ID:"+ this.ID +") must be opened before."
@@ -93,13 +88,11 @@ class CurrentAccount {
 		if (this.closed == false){
 			if (this.opened == true){
 				this.balance -= parseInt(amount,10)
-				console.log("Success! The money has been withdrawn from the bank account (ID:"+ this.ID +"). Current balance: " + this.balance.toString() + " " + this.currency.toString())
 				return {
 					status: true,
 					msg: "Success! The money has been withdrawn from the bank account (ID:"+ this.ID +"). Current balance: " + this.balance.toString() + " " + this.currency.toString()
 				}
 			} else {
-				console.log("Error! The bank account (ID:"+ this.ID +") must be opened before.")
 				return {
 					status: false,
 					msg: "Error! The bank account (ID:"+ this.ID +") must be opened before."
@@ -117,21 +110,20 @@ class CurrentAccount {
 	close(){
 		if (this.closed == false){
 			if (this.opened == true){
+				this.balance = 0
+				this.opened = false
 				this.closed = true
-				console.log("Success! The bank account (ID:"+ this.ID +") was successfully closed.")
 				return {
 					status: true,
 					msg: "Success! The bank account (ID:"+ this.ID +") was successfully closed."
 				}
 			} else {
-				console.log("Error! The bank account (ID:"+ this.ID +") must be opened before.")
 				return {
 					status: false,
 					msg: "Error! The bank account (ID:"+ this.ID +") must be opened before."
 				}
 			}
 		} else {
-			console.log('Error! The bank account (ID:'+ this.ID +') already closed.')
 			return {
 				status: false,
 				msg: 'Error! The bank account (ID:'+ this.ID +') already closed.'
@@ -194,6 +186,66 @@ class DemandDeposit extends CurrentAccount {
 			}
 		}
 	}
+	// если мы закрываем депозит до востребования - то деньги с него мы переводим на текущий счет того же клиента,
+	// а если у него такого счета нету - создаем ему такой
+	close(){
+		if (this.closed == false){
+			if (this.opened == true){
+				// this.closed = true
+				// return {
+				// 	status: true,
+				// 	msg: "Success! The bank account (ID:"+ this.ID +") was successfully closed."
+				// }
+				let outcomeAccount
+				for (var key in Accounts){
+					let account = Accounts[key]
+					if(account.clientID == this.clientID && account.type == "Current" && account.opened == true){
+						outcomeAccount = Accounts[key]
+					}
+				}
+				if(outcomeAccount !== undefined){
+					if (outcomeAccount.topUp(this.balance)){
+						this.balance = 0
+						this.opened = false
+						this.closed = true
+						return {
+							status: true,
+							msg: "Success! The bank account (ID:"+ this.ID +") had been closed. The money had been transferred to another account (ID:"+ outcomeAccount.ID +")"
+						}
+					} else {
+						return {
+							status: false,
+							msg: "Error! Fatal error during transfering the money to another account."
+						}
+					}					
+				} else {
+					let ID = this.ID + "_generated"
+					outcomeAccount = new CurrentAccount(this.clientID, ID, this.currency)
+					outcomeAccount.reserve()
+					outcomeAccount.open()
+					outcomeAccount.topUp(this.balance)
+					Accounts[outcomeAccount.ID] = outcomeAccount
+					this.balance = 0
+					this.opened = false
+					this.closed = true
+					return {
+						status: true,
+						msg: "Success! The bank account (ID:"+ this.ID +") had been closed. The money had been transferred to another account (ID:"+ outcomeAccount.ID +")"
+					}
+				}
+			} else {
+				return {
+					status: false,
+					msg: "Error! The bank account (ID:"+ this.ID +") must be opened before."
+				}
+			}
+		} else {
+			return {
+				status: false,
+				msg: 'Error! The bank account (ID:'+ this.ID +') already closed.'
+			}
+		}
+	}
 }
 
 // Срочный депозит
@@ -208,8 +260,26 @@ class FixedTermDeposit extends DemandDeposit {
 
 		this.closureDate = closureDate
 	}
-	// hide() {
-	// 	alert(`${this.name} прячется!`);
+	// close(){
+	// 	if (this.closed == false){
+	// 		if (this.opened == true){
+	// 			this.closed = true
+	// 			return {
+	// 				status: true,
+	// 				msg: "Success! The bank account (ID:"+ this.ID +") was successfully closed."
+	// 			}
+	// 		} else {
+	// 			return {
+	// 				status: false,
+	// 				msg: "Error! The bank account (ID:"+ this.ID +") must be opened before."
+	// 			}
+	// 		}
+	// 	} else {
+	// 		return {
+	// 			status: false,
+	// 			msg: 'Error! The bank account (ID:'+ this.ID +') already closed.'
+	// 		}
+	// 	}
 	// }
 }
 
@@ -217,8 +287,7 @@ class FixedTermDeposit extends DemandDeposit {
 var handlers = {}
 
 handlers.index = function(req,res){
-	res.write("write some intructions here...")
-	res.end()
+	res.status(200).send(Accounts)
 }
 
 // Required values: ID
