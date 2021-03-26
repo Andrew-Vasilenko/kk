@@ -4,11 +4,24 @@
 
 // dependencies
 const url = require('url');
+const schedule = require('node-schedule');
 
 // "database"
 Accounts = {}
 
-// Классы
+// autoclosing function
+autoclose = function(accountID, closureDate){
+	job = schedule.scheduleJob(closureDate, function(){
+		// только если аккаунт не был закрыт или вовсе удален...
+		if(Accounts[accountID] !== undefined && Accounts[accountID].closed == false){
+			Accounts[accountID].close()
+			console.log("WARNING! The bank account (ID:"+ accountID +") was automatically closed.")
+		}		
+	});
+}
+
+
+// Классы:
 // Текущий счет
 class CurrentAccount {
 	constructor(clientID, ID, currency) {
@@ -110,13 +123,28 @@ class CurrentAccount {
 	close(){
 		if (this.closed == false){
 			if (this.opened == true){
-				this.balance = 0
-				this.opened = false
-				this.closed = true
-				return {
-					status: true,
-					msg: "Success! The bank account (ID:"+ this.ID +") was successfully closed."
+				if (this.balance > 0){
+					this.balance = 0
+					this.opened = false
+					this.closed = true
+					return {
+						status: true,
+						msg: "Success! The bank account (ID:"+ this.ID +") was successfully closed."
+					}
+				} else {
+					if (this.balance == 0){
+						return {
+							status: true,
+							msg: "Success! The bank account (ID:"+ this.ID +") had been closed. The money had been transferred to another account (ID:"+ outcomeAccount.ID +")"
+						}
+					} else {
+						return {
+							status: false,
+							msg: "Error! The bank account (ID:"+ this.ID +") cannot be closed while having negative balance."
+						}
+					}
 				}
+				
 			} else {
 				return {
 					status: false,
@@ -186,25 +214,42 @@ class DemandDeposit extends CurrentAccount {
 			}
 		}
 	}
-	// если мы закрываем депозит до востребования - то деньги с него мы переводим на текущий счет того же клиента,
-	// а если у него такого счета нету - создаем ему такой
+	// переопределение close()...
+	// если мы закрываем депозит до востребования - то деньги с него переводятся на текущий счет того же клиента,
+	// а если у него такого счета нету - такой создается (+ резервируется и открывается автоматически)
 	close(){
 		if (this.closed == false){
 			if (this.opened == true){
-				// this.closed = true
-				// return {
-				// 	status: true,
-				// 	msg: "Success! The bank account (ID:"+ this.ID +") was successfully closed."
-				// }
-				let outcomeAccount
-				for (var key in Accounts){
-					let account = Accounts[key]
-					if(account.clientID == this.clientID && account.type == "Current" && account.opened == true){
-						outcomeAccount = Accounts[key]
+				if (this.balance > 0){
+					let outcomeAccount
+					for (var key in Accounts){
+						let account = Accounts[key]
+						if(account.clientID == this.clientID && account.type == "Current" && account.opened == true){
+							outcomeAccount = Accounts[key]
+						}
 					}
-				}
-				if(outcomeAccount !== undefined){
-					if (outcomeAccount.topUp(this.balance)){
+					if(outcomeAccount !== undefined){
+						if (outcomeAccount.topUp(this.balance)){
+							this.balance = 0
+							this.opened = false
+							this.closed = true
+							return {
+								status: true,
+								msg: "Success! The bank account (ID:"+ this.ID +") had been closed. The money had been transferred to another account (ID:"+ outcomeAccount.ID +")"
+							}
+						} else {
+							return {
+								status: false,
+								msg: "Error! Fatal error during transfering the money to another account."
+							}
+						}					
+					} else {
+						let ID = this.ID + "generated"
+						outcomeAccount = new CurrentAccount(this.clientID, ID, this.currency)
+						outcomeAccount.reserve()
+						outcomeAccount.open()
+						outcomeAccount.topUp(this.balance)
+						Accounts[outcomeAccount.ID] = outcomeAccount
 						this.balance = 0
 						this.opened = false
 						this.closed = true
@@ -212,27 +257,21 @@ class DemandDeposit extends CurrentAccount {
 							status: true,
 							msg: "Success! The bank account (ID:"+ this.ID +") had been closed. The money had been transferred to another account (ID:"+ outcomeAccount.ID +")"
 						}
+					}
+				} else {
+					if (this.balance == 0){
+						return {
+							status: true,
+							msg: "Success! The bank account (ID:"+ this.ID +") had been closed. The money had been transferred to another account (ID:"+ outcomeAccount.ID +")"
+						}
 					} else {
 						return {
 							status: false,
-							msg: "Error! Fatal error during transfering the money to another account."
+							msg: "Error! The bank account (ID:"+ this.ID +") cannot be closed while having negative balance."
 						}
-					}					
-				} else {
-					let ID = this.ID + "_generated"
-					outcomeAccount = new CurrentAccount(this.clientID, ID, this.currency)
-					outcomeAccount.reserve()
-					outcomeAccount.open()
-					outcomeAccount.topUp(this.balance)
-					Accounts[outcomeAccount.ID] = outcomeAccount
-					this.balance = 0
-					this.opened = false
-					this.closed = true
-					return {
-						status: true,
-						msg: "Success! The bank account (ID:"+ this.ID +") had been closed. The money had been transferred to another account (ID:"+ outcomeAccount.ID +")"
 					}
 				}
+				
 			} else {
 				return {
 					status: false,
@@ -250,7 +289,7 @@ class DemandDeposit extends CurrentAccount {
 
 // Срочный депозит
 class FixedTermDeposit extends DemandDeposit {
-	constructor(clientID, ID, currency, interestRate, closureDate) {
+	constructor(clientID, ID, currency, interestRate, duration) {
 		super(clientID)
 		this.ID = ID
 		this.currency = currency
@@ -258,29 +297,40 @@ class FixedTermDeposit extends DemandDeposit {
 		this.interestRate = interestRate
 		this.type = "FixedTermDeposit"
 
-		this.closureDate = closureDate
+		this.duration = duration
 	}
-	// close(){
-	// 	if (this.closed == false){
-	// 		if (this.opened == true){
-	// 			this.closed = true
-	// 			return {
-	// 				status: true,
-	// 				msg: "Success! The bank account (ID:"+ this.ID +") was successfully closed."
-	// 			}
-	// 		} else {
-	// 			return {
-	// 				status: false,
-	// 				msg: "Error! The bank account (ID:"+ this.ID +") must be opened before."
-	// 			}
-	// 		}
-	// 	} else {
-	// 		return {
-	// 			status: false,
-	// 			msg: 'Error! The bank account (ID:'+ this.ID +') already closed.'
-	// 		}
-	// 	}
-	// }
+	// переопределение open()...
+	// ...как только срочный депозит открыт (opened == true) - 
+	// начинается запускается функция его автозакрытия, впрочем закрыть его можно и вручную, если сделать это до истечения срока
+	open(){
+		if(this.opened == false){
+			if (this.reserved == true){
+				this.opened = true
+
+				// current timestamp in milliseconds...
+				let ts = Date.now()
+				// ...plus duration in minutes
+				ts += 1000 * 60 * this.duration
+				let closureDate = new Date(ts)
+				autoclose(this.ID, closureDate)
+
+				return {
+					status: true,
+					msg: "Success! The bank account (ID:"+ this.ID +") was successfully opened."
+				}
+			} else {
+				return {
+					status: false,
+					msg: "Error! The bank account (ID:"+ this.ID +") must be reserved before."
+				}
+			}
+		} else {
+			return {
+				status: false,
+				msg: "Error! The bank account (ID:"+ this.ID +") was already opened."
+			}
+		}
+	}
 }
 
 // container
@@ -292,7 +342,6 @@ handlers.index = function(req,res){
 
 // Required values: ID
 handlers.getAccount = function(req,res){
-	// res.send("account' READ functions ('get all' option is also acceptable)")
 	queryObject = url.parse(req.url,true).query
 	if (queryObject.ID !== undefined){
 		let ID = queryObject.ID
@@ -318,24 +367,24 @@ handlers.createAccount = function(req,res){
 		let currency = req.body.currency
 		let interestRate
 		let newAccount
-		if (ID && clientID && type && currency !== undefined){
+		if (ID && ID.includes("generated") == false && clientID && type && currency){
 
 			switch (type){
 				case "Current":
 					newAccount = new CurrentAccount(clientID, ID, currency)
 
 					Accounts[newAccount.ID] = newAccount
-					console.log("New account (ID:"+ ID +") was successfully created!")
+
 					res.status(201).send("New account (ID:"+ ID +") was successfully created!")
 					break
 				case "DemandDeposit":
 					interestRate = req.body.interestRate
-					if (interestRate !== undefined && interestRate > 0){
+					if (interestRate > 0){
 
 						newAccount = new DemandDeposit(clientID, ID, currency, interestRate)
 
 						Accounts[newAccount.ID] = newAccount
-						console.log("New account (ID:"+ ID +") was successfully created!")
+
 						res.status(201).send("New account (ID:"+ ID +") was successfully created!")
 						break
 					} else {
@@ -344,29 +393,26 @@ handlers.createAccount = function(req,res){
 					
 				case "FixedTermDeposit":
 					interestRate = req.body.interestRate
-					let closureDate = req.body.closureDate
-					if (interestRate !== undefined && interestRate > 0 && closureDate !== undefined){
+					let duration = req.body.duration
+					if (interestRate > 0 && duration !== undefined){
 
-						newAccount = new FixedTermDeposit(clientID, ID, currency, interestRate, closureDate)
+						newAccount = new FixedTermDeposit(clientID, ID, currency, interestRate, duration)
 
 						Accounts[newAccount.ID] = newAccount
-						console.log("New account (ID:"+ ID +") was successfully created!")
+
 						res.status(201).send("New account (ID:"+ ID +") was successfully created!")
-						break
+						
 					} else {
-						res.status(400).send("Error! 'interestRate' value must be a positive number and closureDate must not be empty.")
+						res.status(400).send("Error! 'interestRate' and 'duration' values must be a positive numbers.")
 					}
+					break
 					
 				default: 
 					res.status(400).send("Error! Wrong account type. Correct values are: \n 'Current', 'DemandDeposit', 'FixedTermDeposit'")
 			}
-			// switch (type)
-			// current => new Account(clientID, ID, currency)
-
 			
 		} else {
-			console.log("Error! Account was not created. Check the required values.")
-			res.status(400).send("Error! Account was not created. Check the required values.")
+			res.status(400).send("Error! Account was not created. Check the required values and keep in mind that 'ID' value cannot contain 'generated' substring.")
 		}
 	}
 	
@@ -375,7 +421,6 @@ handlers.createAccount = function(req,res){
 // Required values: ID, action
 // Optional values: amount
 handlers.editAccount = function(req,res){
-	// res.send("account's EDIT function")
 	let ID = req.body.ID
 	let action = req.body.action
 	if (ID !== undefined){
