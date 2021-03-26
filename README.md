@@ -2,9 +2,9 @@
 
 Запуск:
 
-npm install express
-npm install node-schedule
-node index
+npm install express  
+npm install node-schedule  
+node index  
 
 Просмотр информации обо всех имеющихся счетах:
 
@@ -20,34 +20,34 @@ GET => /accounts?ID=ID
 
 POST => "/accounts"
 
-POST body = {
-	clientID: "clientID",	// id клиента
+<pre><code>POST body = {
+	clientID: "clientID",			// id клиента  
 	ID: "ID",				// id счета
-	currency: "currency",	// валюта счета
-	type: "Current"			// тип счета
-}
+	currency: "currency",			// валюта счета
+	type: "Current"				// тип счета
+}</code></pre>
 
 Пример создания счета - депозит до востребования:
 
-POST body = {
+<pre><code>POST body = {
 	clientID: "clientID",	
 	ID: "ID",				
 	currency: "currency",	
 	type: "DemandDeposit",	
-	interestRate: 12		// процентная ставка
-}
+	interestRate: 12			// процентная ставка
+}</code></pre>
 
 
 Пример создания счета - срочный депозит:
 
-POST body = {
+<pre><code>POST body = {
 	clientID: "clientID",
-	ID: "ID",
+	ID: "ID",d
 	currency: "currency",
 	type: "DemandDeposit",
 	interestRate: 100500,
-	duration: 43800			// время жизни счета в минутах(!) 
-}
+	duration: 43800				// время жизни счета в минутах(!) 
+}</code></pre>
 
 
 Примеры:
@@ -55,60 +55,60 @@ POST body = {
 
 PUT => "/accounts"
 
-PUT body = {
+<pre><code>PUT body = {
 	ID: "ID",
-	action: "reserve"		// действие над счетом
-}
+	action: "reserve"			// действие над счетом
+}</code></pre>
 
 
 "открытия" счета:
 
-PUT body = {
+<pre><code>PUT body = {
 	ID: "ID",
 	action: "open"
-}
+}</code></pre>
 
 
 "пополнения" счета:
 
-PUT body = {
+<pre><code>PUT body = {
 	ID: "ID",
 	action: "topUp",
-	amount: 100500			// сумма пополнения/списания
-}
+	amount: 100500				// сумма пополнения/списания
+}</code></pre>
 
 
 "списания" со счета:
 
-PUT body = {
+<pre><code>PUT body = {
 	ID: "ID",
 	action: "withdraw",
 	amount: 100500
-}
+}</code></pre>
 
 
 "начисления" процентов на счет:
 
-PUT body = {
+<pre><code>PUT body = {
 	ID: "ID",
 	action: "interestCharge"
-}
+}</code></pre>
 
 
 "уплаты" процентов на счет:
 
-PUT body = {
+<pre><code>PUT body = {
 	ID: "ID",
 	action: "interestPay"
-}
+}</code></pre>
 
 
 "закрытия" счета:
 
-PUT body = {
+<pre><code>PUT body = {
 	ID: "ID",
 	action: "close"
-}
+}</code></pre>
 Примечания:
 При закрытии счета, счет не удаляется.
 Написаны проверки - закрыть можно только тот счет который уже открыт (а до этого резервирован)
@@ -122,9 +122,9 @@ PUT body = {
 
 DELETE => "/accounts"
 
-DELETE body = {
+<pre><code>DELETE body = {
 	ID: ID
-}
+}</code></pre>
 
 Мега костыль (!):
 Все счета хранятся в json'e и соответственно существуют пока сервер не будет перезапущен 
