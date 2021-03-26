@@ -46,7 +46,7 @@ POST => "/accounts"
 	currency: "currency",
 	type: "DemandDeposit",
 	interestRate: 100500,
-	duration: 43800				// время жизни счета в минутах(!) 
+	duration: 43800				// время жизни счета в минутах(!) (duration представляет собой значение срока на который открывается счет) 
 }</code></pre>
 
 
